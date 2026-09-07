@@ -15,10 +15,7 @@ CLASS_NAMES_PATH = "class_names.txt"
 
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model(
-        MODEL_PATH,
-        compile=False
-        )
+    return tf.keras.models.load_model(MODEL_PATH)
 
 
 def load_class_names():
