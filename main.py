@@ -14,7 +14,7 @@ from PIL import Image
 # --------------------------------------------------
 
 MODEL_PATH = "keras_model.h5"
-CLASS_NAMES_PATH = "class_names.txt"
+CLASS_NAMES_PATH = "labels.txt"
 
 
 # --------------------------------------------------
