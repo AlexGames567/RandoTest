@@ -1,0 +1,6 @@
+0 Brotdose
+1 Fahrradhelm
+2 Hoodie
+3 T-Shirt
+4 Trinkflasche
+5 Sonstiges
