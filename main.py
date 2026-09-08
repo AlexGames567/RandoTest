@@ -1,14 +1,12 @@
 import os
 
-# Muss vor dem Import von TensorFlow stehen
-os.environ["TF_USE_LEGACY_KERAS"] = "1"
+# TensorFlow/Keras Konfiguration vor dem Import
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
 import streamlit as st
 import tensorflow as tf
 import numpy as np
 from PIL import Image
-
 
 MODEL_PATH = "keras_model.h5"
 CLASS_NAMES_PATH = "class_names.txt"
@@ -19,20 +17,28 @@ class CompatibleDepthwiseConv2D(tf.keras.layers.DepthwiseConv2D):
     Kompatibilität für ältere Keras-Modelle, die den Parameter
     groups=1 in der Konfiguration gespeichert haben.
     """
-
     def __init__(self, *args, groups=1, **kwargs):
         super().__init__(*args, **kwargs)
 
 
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model(
-        MODEL_PATH,
-        compile=False,
-        custom_objects={
-            "DepthwiseConv2D": CompatibleDepthwiseConv2D
-        }
-    )
+    # Versuche das Modell zu laden. Falls Keras 3 Probleme macht,
+    # hilft oft das Registrieren über custom_objects oder das Laden via tf.keras.
+    try:
+        return tf.keras.models.load_model(
+            MODEL_PATH,
+            compile=False,
+            custom_objects={
+                "DepthwiseConv2D": CompatibleDepthwiseConv2D
+            }
+        )
+    except Exception as e:
+        # Fallback falls Keras 3 das Format gar nicht akzeptiert
+        raise RuntimeError(
+            f"Fehler beim Laden des Modells. Stelle sicher, dass das Modell "
+            f"mit einer kompatiblen TensorFlow/Keras-Version erstellt wurde.\nDetails: {e}"
+        )
 
 
 def load_class_names():
@@ -53,7 +59,7 @@ def preprocess_image(image, width, height):
 
     image_array = np.asarray(image).astype("float32")
 
-    # Standard für viele Keras-Modelle
+    # Standard für viele Keras-Modelle (Normalisierung auf [0, 1])
     image_array = image_array / 255.0
 
     # Form: (1, Höhe, Breite, 3)
@@ -63,7 +69,6 @@ def preprocess_image(image, width, height):
 
 
 def make_prediction(model, image_array, class_names):
-    # Wichtig: genau EIN Tensor wird übergeben
     prediction = model.predict(
         image_array,
         batch_size=1,
@@ -110,9 +115,7 @@ except Exception as error:
     st.code(str(error))
     st.stop()
 
-
 class_names = load_class_names()
-
 
 try:
     input_shape = model.input_shape
@@ -137,17 +140,14 @@ except Exception as error:
     st.error(f"Fehler beim Ermitteln der Bildgröße: {error}")
     st.stop()
 
-
 st.caption(
     f"Erwartete Bildgröße: {image_width} × {image_height} Pixel"
 )
-
 
 uploaded_file = st.file_uploader(
     "Bild hochladen",
     type=["jpg", "jpeg", "png", "webp"]
 )
-
 
 if uploaded_file is not None:
     try:
