@@ -14,31 +14,23 @@ CLASS_NAMES_PATH = "class_names.txt"
 
 class CompatibleDepthwiseConv2D(tf.keras.layers.DepthwiseConv2D):
     """
-    Kompatibilität für ältere Keras-Modelle, die den Parameter
-    groups=1 in der Konfiguration gespeichert haben.
+    Kompatibilität für ältere Keras-Modelle.
     """
-    def __init__(self, *args, groups=1, **kwargs):
+    def __init__(self, *args, **kwargs):
+        # Entferne 'groups' falls es zu Konflikten führt
+        kwargs.pop("groups", None)
         super().__init__(*args, **kwargs)
-
 
 @st.cache_resource
 def load_model():
-    # Versuche das Modell zu laden. Falls Keras 3 Probleme macht,
-    # hilft oft das Registrieren über custom_objects oder das Laden via tf.keras.
-    try:
-        return tf.keras.models.load_model(
-            MODEL_PATH,
-            compile=False,
-            custom_objects={
-                "DepthwiseConv2D": CompatibleDepthwiseConv2D
-            }
-        )
-    except Exception as e:
-        # Fallback falls Keras 3 das Format gar nicht akzeptiert
-        raise RuntimeError(
-            f"Fehler beim Laden des Modells. Stelle sicher, dass das Modell "
-            f"mit einer kompatiblen TensorFlow/Keras-Version erstellt wurde.\nDetails: {e}"
-        )
+    # Verwende den custom_object_scope, um Keras beim Deserialisieren zu helfen
+    custom_objects = {"CompatibleDepthwiseConv2D": CompatibleDepthwiseConv2D, "DepthwiseConv2D": CompatibleDepthwiseConv2D}
+    
+    with tf.keras.utils.custom_object_scope(custom_objects):
+        try:
+            return tf.keras.models.load_model(MODEL_PATH, compile=False)
+        except Exception as e:
+            raise RuntimeError(f"Fehler beim Laden des Modells: {e}")
 
 
 def load_class_names():
