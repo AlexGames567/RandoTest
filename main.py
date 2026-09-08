@@ -1,7 +1,3 @@
-import os
-
-# TensorFlow/Keras Konfiguration vor dem Import
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
 import streamlit as st
 import tensorflow as tf
