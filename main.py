@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 
 MODEL_PATH = "keras_model.h5"
-CLASS_NAMES_PATH = "class_names.txt"
+CLASS_NAMES_PATH = "labels.txt"
 
 
 class CompatibleDepthwiseConv2D(tf.keras.layers.DepthwiseConv2D):
